@@ -1,0 +1,13 @@
+package com.example.eqippedServiceRegistory;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class EqippedServiceRegistoryApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(EqippedServiceRegistoryApplication.class, args);
+	}
+
+}

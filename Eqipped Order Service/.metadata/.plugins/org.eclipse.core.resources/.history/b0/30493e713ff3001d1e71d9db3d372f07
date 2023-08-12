@@ -1,0 +1,26 @@
+server:
+  port: 5004
+
+
+# Eureka start
+#eureka:
+#  instance:
+#    prefer-ip-address: true
+#  client:
+#    fetch-registry: true
+#    register-with-eureka: true
+#    service-url:
+#      defaultZone: http://3.7.18.180:5000/eureka
+# Eureka End
+
+# Spring Start
+#spring.config.import= optional:configserver:http://3.7.18.180:5001
+spring:
+  application:
+    name: ORDER-SERVICE
+  data:
+    mongodb:
+      uri: mongodb+srv://admin:gsk3E1ZwjWwgqAoC@cluster0.9xkoq.mongodb.net/
+      database: eqipped_new
+  config:
+    import: optional:configserver:http://3.7.18.180:5001

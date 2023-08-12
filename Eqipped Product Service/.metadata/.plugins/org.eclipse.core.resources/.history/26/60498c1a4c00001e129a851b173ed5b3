@@ -1,0 +1,185 @@
+package com.eqipped.productService.service.impl;
+
+import com.eqipped.productService.config.FileUpload;
+import com.eqipped.productService.entities.Product;
+import com.eqipped.productService.repository.ProductRepository;
+import com.eqipped.productService.service.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class ProductServiceImpl implements ProductService {
+
+    @Autowired()
+    private ProductRepository productRepository;
+
+
+    @Autowired
+    private FileUpload fileUpload;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    public Map<String, Object> createProductData(
+            MultipartFile images,
+            String vendorId,
+            String vendorName,
+            String vendorEmail,
+            String productName,
+            String productDescription,
+            String category,
+            Integer productQuantity,
+            float individualProductPrice,
+            float totalProductPrice,
+            float discountPercentage,
+            String status,
+            String action
+    ){
+
+
+        Map<String,Object> map = new HashMap<>();
+
+        if (!images.isEmpty()) {
+            try {
+                Map<String,Object> uploadMap  = fileUpload.uploadFile(images);
+                map.put("File Exception: ",uploadMap.get("e"));
+                boolean uploaded = (boolean) uploadMap.get("f");
+                if(uploaded) {
+                    Product product = new Product();
+                    product.setVendorId(vendorId);
+                    product.setVendorName(vendorName);
+                    product.setVendorEmail(vendorEmail);
+                    product.setProductName(productName);
+                    product.setProductDescription(productDescription);
+                    product.setCategory(category);
+                    product.setProductQuantity(productQuantity);
+                    product.setIndividualProductPrice(individualProductPrice);
+                    product.setTotalProductPrice(totalProductPrice);
+                    product.setStatus(status);
+                    product.setAction(action);
+                    product.setDate(LocalDate.now());
+                    product.setImageName(uploadMap.get("fileName").toString());
+                    product.setImagePath(uploadMap.get("filePath").toString());
+                    product.setDiscountPercentage(discountPercentage);
+                    float discountPrice = (discountPercentage/100)*totalProductPrice;
+                    product.setNatePriceWithDiscount(totalProductPrice-discountPrice);
+
+                    productRepository.save(product);
+                    map.put("STATUS", "SUCCESS");
+                    map.put("PRODUCT", product);
+                    //map.put("filePath",uploadMap.get("filePath"));
+                }else
+                    map.put("STATUS","FAILED");
+
+            } catch (Exception e) {
+                map.put("STATUS","InternalServerError");
+                map.put("EXCEPTION",e);
+            }
+        }
+
+        return map;
+    }
+
+    public Map<String, Object> updateProductData(
+            String productId,
+            MultipartFile images,
+            String vendorId,
+            String vendorName,
+            String vendorEmail,
+            String productName,
+            String productDescription,
+            String category,
+            Integer productQuantity,
+            float individualProductPrice,
+            float totalProductPrice,
+            float discountPercentage,
+            String status,
+            String action
+    ){
+
+
+        Map<String,Object> map = new HashMap<>();
+
+        if (!images.isEmpty()) {
+            try {
+                Map<String,Object> uploadMap  = fileUpload.uploadFile(images);
+                map.put("File Exception: ",uploadMap.get("e"));
+                boolean uploaded = (boolean) uploadMap.get("f");
+                if(uploaded) {
+                    Product product1 = productRepository.findById(productId).get();
+                    if (product1!=null) {
+                        Product product = new Product();
+                        product.setProductId(productId);
+                        product.setVendorId(vendorId);
+                        product.setVendorName(vendorName);
+                        product.setVendorEmail(vendorEmail);
+                        product.setProductName(productName);
+                        product.setProductDescription(productDescription);
+                        product.setCategory(category);
+                        product.setProductQuantity(productQuantity);
+                        product.setIndividualProductPrice(individualProductPrice);
+                        product.setTotalProductPrice(totalProductPrice);
+                        product.setStatus(status);
+                        product.setAction(action);
+                        product.setDate(LocalDate.now());
+                        product.setImageName(uploadMap.get("fileName").toString());
+                        product.setImagePath(uploadMap.get("filePath").toString());
+                        product.setDiscountPercentage(discountPercentage);
+                        float discountPrice = (discountPercentage / 100) * totalProductPrice;
+                        product.setNatePriceWithDiscount(totalProductPrice - discountPrice);
+                        product1 = product;
+                        productRepository.save(product1);
+                        map.put("STATUS", "SUCCESS");
+                        map.put("PRODUCT", product);
+                    }else
+                        map.put("STATUS","Product is not Present");
+                    //map.put("filePath",uploadMap.get("filePath"));
+                }else
+                    map.put("STATUS","FAILED");
+
+            } catch (Exception e) {
+                map.put("STATUS","InternalServerError");
+                map.put("EXCEPTION",e);
+            }
+        }
+
+        return map;
+    }
+
+    @GetMapping("/")
+    public List<Product> getAllProductData(){
+        return productRepository.findAll();
+    }
+
+    public List<Product> getAllProductCategory(String category){
+        Query query = new Query();
+        query.addCriteria(Criteria.where("category").is(category));
+        List<Product> products = mongoTemplate.find(query, Product.class);
+
+        return products;
+    }
+
+    public List<Product> getAllProductVendorId(String vendorId){
+        Query query = new Query();
+        query.addCriteria(Criteria.where("vendorId").is(vendorId));
+        List<Product> products = mongoTemplate.find(query, Product.class);
+
+        return products;
+    }
+
+    public String deleteProductData(String productId){
+        productRepository.deleteById(productId);
+        return "Product is deleted";
+    }
+}
